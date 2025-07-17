@@ -76,7 +76,7 @@ install_xui() {
   status_msg running "安装X-UI面板"
   require_cmd curl bash
   check_network
-  bash <(curl -fsSL https://raw.githubusercontent.com/networkgateways/script/main/Tool/x-ui.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/cloudquota/script/main/Tool/x-ui.sh)
 }
 
 # X-UI更新
@@ -84,7 +84,7 @@ update_xui() {
   status_msg running "更新X-UI面板"
   require_cmd curl bash
   check_network
-  bash <(curl -fsSL https://raw.githubusercontent.com/networkgateways/script/main/Tool/x-ui-update.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/cloudquota/script/main/Tool/x-ui-update.sh)
 }
 
 # DDNS配置
@@ -92,7 +92,7 @@ setup_ddns() {
   status_msg running "配置DDNS动态域名"
   require_cmd curl bash
   check_network
-  bash <(curl -fsSL https://raw.githubusercontent.com/networkgateways/script/main/Tool/install-ddns-go.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/cloudquota/script/main/Tool/install-ddns-go.sh)
 }
 
 # GOST代理安装
@@ -115,7 +115,7 @@ setup_docker() {
   check_network
   script_file="install_docker_and_restart.sh"
   [ ! -f "$script_file" ] && \
-    wget -q -N https://raw.githubusercontent.com/networkgateways/script/main/Tool/install_docker_and_restart.sh
+    wget -q -N https://raw.githubusercontent.com/cloudquota/script/main/Tool/install_docker_and_restart.sh
   bash "$script_file"
 }
 
