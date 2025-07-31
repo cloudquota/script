@@ -79,14 +79,6 @@ install_xui() {
   bash <(curl -fsSL https://raw.githubusercontent.com/cloudquota/script/main/Tool/x-ui.sh)
 }
 
-# X-UI更新
-update_xui() {
-  status_msg running "更新X-UI面板"
-  require_cmd curl bash
-  check_network
-  bash <(curl -fsSL https://raw.githubusercontent.com/cloudquota/script/main/Tool/x-ui-update.sh)
-}
-
 # DDNS配置
 setup_ddns() {
   status_msg running "配置DDNS动态域名"
@@ -156,7 +148,6 @@ process_choice() {
       ;;
     2)
       install_xui
-      update_xui
       ;;
     3) setup_ddns ;;
     4) install_gost ;;
