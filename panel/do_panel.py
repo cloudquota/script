@@ -255,7 +255,7 @@ def delete_droplet(token: str, droplet_id: str):
 # Streamlit UI
 # ----------------------------
 st.set_page_config(page_title="DigitalOcean Web 面板 (Streamlit)", layout="wide")
-st.title("DigitalOcean 简易 Web 面板（单文件 Streamlit）")
+st.title("DigitalOcean 简易 Web 面板")
 st.caption("强制 root 密码登录（不使用 SSH Key）；列表显示 No=1/2/3...；删除二次点击确认。")
 
 # 删除确认状态
