@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA 验证器 | 在线 TOTP 双重验证码生成器 - 2fa.autos</title>
+    <meta name="description"
+        content="免费、安全的在线 2FA 验证器 (2fa.autos)。支持 TOTP 协议，无需下载 App 即可在网页端快速生成 Google Authenticator 等应用格式的双重验证码 (2FA Code)。">
+    <meta name="keywords" content="2fa, 2fa验证器, 2fa.autos, TOTP, 双重验证, 验证码生成器, Google Authenticator, 网页版2fa">
+    <link rel="canonical" href="https://2fa.autos/">
+    <meta property="og:title" content="2FA 验证器 | 在线双重验证码生成器 - 2fa.autos">
+    <meta property="og:description" content="免费、安全的在线网页版 2FA 验证器，支持生成 TOTP 动态验证码。">
+    <meta property="og:url" content="https://2fa.autos/">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 极简网格背景 */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-size: 32px 32px;
+            background-image: radial-gradient(circle at center, #cbd5e1 1px, transparent 1px);
+            opacity: 0.4;
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.05),
+                0 0 0 1px rgba(15, 23, 42, 0.03);
+            transition: var(--transition);
+        }
+
+        /* 输入区域 */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .secret-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .secret-input::placeholder {
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0;
+        }
+
+        .secret-input:focus {
+            background: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        /* 按钮组 */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            flex: 2;
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: var(--text-primary);
+        }
+
+        /* 验证码展示区 */
+        .code-display {
+            display: none;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .code-display.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .code-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+            padding: 20px 24px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .code-section:hover {
+            background: #ffffff;
+            border-color: var(--border-color);
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .code-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: var(--text-primary);
+            user-select: all;
+        }
+
+        /* 环形倒计时 */
+        .timer-ring {
+            position: relative;
+            width: 54px;
+            height: 54px;
+            flex-shrink: 0;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .timer-ring svg {
+            transform: rotate(-90deg);
+            width: 54px;
+            height: 54px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .timer-ring .ring-bg {
+            fill: none;
+            stroke: var(--bg-secondary);
+            stroke-width: 4;
+        }
+
+        .timer-ring .ring-progress {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 138.2;
+            /* 2 * PI * 22 */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+        }
+
+        .timer-ring .ring-progress.warning {
+            stroke: var(--warning);
+        }
+
+        .timer-ring .ring-progress.danger {
+            stroke: var(--danger);
+        }
+
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* 二维码区域 */
+        .qr-section {
+            display: none;
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .qr-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .qr-container {
+            display: inline-flex;
+            padding: 16px;
+            background: #ffffff;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 12px 24px;
+            background: var(--text-primary);
+            color: #ffffff;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast-icon {
+            color: var(--success);
+        }
+
+        /* 错误状态 */
+        .error-msg {
+            display: none;
+            color: var(--danger);
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 10px;
+            padding-left: 4px;
+            animation: shake 0.4s ease;
+        }
+
+        .error-msg.active {
+            display: block;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .card {
+                padding: 24px;
+            }
+
+            .code-section {
+                padding: 16px;
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .code-value {
+                font-size: 32px;
+                letter-spacing: 4px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+
+        /* ============ 极简分享模式 ============ */
+        body.share-mode {
+            background: #1a1a2e;
+            padding: 0;
+        }
+
+        body.share-mode::before {
+            display: none;
+        }
+
+        .share-view {
+            display: none;
+            text-align: center;
+            color: #e2e8f0;
+        }
+
+        body.share-mode .container {
+            display: none;
+        }
+
+        body.share-mode .share-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .share-view .share-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 32px;
+        }
+
+        .share-view .share-code-box {
+            border: 2px solid #334155;
+            border-radius: 16px;
+            padding: 28px 48px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: all;
+        }
+
+        .share-view .share-code-box:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .share-view .share-code-box:active {
+            transform: scale(0.97);
+        }
+
+        .share-view .share-code-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 52px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: #f1f5f9;
+        }
+
+        .share-view .share-countdown {
+            margin-top: 24px;
+            font-size: 15px;
+            color: #64748b;
+        }
+
+        .share-view .share-countdown span {
+            color: #94a3b8;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .share-view .share-hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        @media (max-width: 480px) {
+            .share-view .share-code-value {
+                font-size: 36px;
+                letter-spacing: 4px;
+            }
+
+            .share-view .share-code-box {
+                padding: 22px 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>2FA 验证器</h1>
+            <p>基于 TOTP 标准，安全、快速生成验证码</p>
+        </div>
+
+        <!-- 主卡片 -->
+        <div class="card">
+            <div class="input-group">
+                <input type="text" id="secretInput" class="secret-input" placeholder="点击此处输入密钥" autocomplete="off"
+                    spellcheck="false">
+                <div class="error-msg" id="errorMsg"></div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="generateBtn" onclick="handleGenerate()">
+                    获取验证码
+                </button>
+                <button class="btn btn-secondary" id="qrBtn" onclick="handleQR()">
+                    二维码
+                </button>
+            </div>
+
+            <!-- 验证码展示 -->
+            <div class="code-display" id="codeDisplay">
+                <div class="code-section" onclick="copyCode()" title="点击复制验证码">
+                    <div class="code-value" id="otpCode">------</div>
+                    <div class="timer-ring">
+                        <svg viewBox="0 0 48 48">
+                            <circle class="ring-bg" cx="24" cy="24" r="22" />
+                            <circle class="ring-progress" id="ringProgress" cx="24" cy="24" r="22" />
+                        </svg>
+                        <span class="timer-text" id="timerText">30</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 二维码 -->
+            <div class="qr-section" id="qrSection">
+                <div class="qr-container" id="qrContainer"></div>
+            </div>
+
+            <!-- 分享提示 -->
+            <div style="margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-muted);">
+                💡 分享快捷链接：<br>
+                <code>https://2fa.autos/2fa/<span id="shareSecretHolder">您的密钥</span></code>
+            </div>
+        </div>
+    </div>
+
+    <!-- 极简分享视图 -->
+    <div class="share-view" id="shareView">
+        <div class="share-title">当前验证码为</div>
+        <div class="share-code-box" id="shareCodeBox" onclick="copyShareCode()">
+            <div class="share-code-value" id="shareCodeValue">------</div>
+        </div>
+        <div class="share-countdown">倒计时 <span id="shareTimerText">30</span>s</div>
+        <div class="share-hint">点击验证码会自动复制到剪切板</div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span id="toastMsg">已复制到剪贴板</span>
+    </div>
+
+    <script>
+        // ============ Base32 解码 ============
+        function base32Decode(input) {
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            const str = input.replace(/\s+/g, '').toUpperCase().replace(/=+$/, '');
+            if (str.length === 0) throw new Error('密钥不能为空');
+            for (let i = 0; i < str.length; i++) {
+                if (alphabet.indexOf(str[i]) === -1) {
+                    throw new Error('包含无效字符，请确认是 Base32 编码');
+                }
+            }
+            let bits = '';
+            for (let i = 0; i < str.length; i++) {
+                const val = alphabet.indexOf(str[i]);
+                bits += val.toString(2).padStart(5, '0');
+            }
+            const bytes = new Uint8Array(Math.floor(bits.length / 8));
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] = parseInt(bits.substring(i * 8, i * 8 + 8), 2);
+            }
+            return bytes;
+        }
+
+        // ============ HMAC-SHA1 ============
+        async function hmacSHA1(keyBytes, message) {
+            const cryptoKey = await crypto.subtle.importKey(
+                'raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+            );
+            return new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, message));
+        }
+
+        // ============ TOTP 生成 ============
+        async function generateTOTP(secret) {
+            const keyBytes = base32Decode(secret);
+            const epoch = Math.floor(Date.now() / 1000);
+            const timeStep = Math.floor(epoch / 30);
+            const timeBytes = new Uint8Array(8);
+            let tmp = timeStep;
+            for (let i = 7; i >= 0; i--) {
+                timeBytes[i] = tmp & 0xff;
+                tmp = Math.floor(tmp / 256);
+            }
+            const hmac = await hmacSHA1(keyBytes, timeBytes);
+            const offset = hmac[hmac.length - 1] & 0x0f;
+            const code = ((hmac[offset] & 0x7f) << 24) |
+                ((hmac[offset + 1] & 0xff) << 16) |
+                ((hmac[offset + 2] & 0xff) << 8) |
+                (hmac[offset + 3] & 0xff);
+            return (code % 1000000).toString().padStart(6, '0');
+        }
+
+        // ============ 全局状态 ============
+        let currentSecret = '';
+        let timerInterval = null;
+        let isGenerating = false;
+        let isShareMode = false;
+
+        // ============ 初始化 ============
+        function getSecretFromPath(pathname) {
+            const segments = pathname.split('/').filter(Boolean);
+            if (segments.length < 2 || segments[0].toLowerCase() !== '2fa') return '';
+
+            // 兼容 /2fa/<secret>，并允许密钥经过 URL 编码
+            try {
+                return decodeURIComponent(segments.slice(1).join('/'));
+            } catch {
+                // 非法编码时降级使用原始路径
+                return segments.slice(1).join('/');
+            }
+        }
+
+        function initFromStorage() {
+            // 首先尝试从 URL 获取密钥 (兼容 /2fa/XXXX 和 ?secret=XXXX )
+            let secretFromUrl = getSecretFromPath(window.location.pathname);
+
+            if (!secretFromUrl) {
+                // 回退尝试查询参数
+                const urlParams = new URLSearchParams(window.location.search);
+                secretFromUrl = urlParams.get('secret');
+            }
+
+            if (secretFromUrl) {
+                // 进入极简分享模式
+                enterShareMode(secretFromUrl);
+            } else {
+                // 普通模式：尝试从本地读取
+                const savedSecret = localStorage.getItem('2fa_secret_key');
+                if (savedSecret) {
+                    document.getElementById('secretInput').value = savedSecret;
+                    handleGenerate(false);
+                }
+            }
+        }
+
+        // ============ 极简分享模式 ============
+        async function enterShareMode(secret) {
+            isShareMode = true;
+            document.body.classList.add('share-mode');
+            currentSecret = secret;
+
+            try {
+                const otp = await generateTOTP(secret);
+                document.getElementById('shareCodeValue').textContent = otp.substring(0, 3) + ' ' + otp.substring(3);
+                startShareTimer();
+            } catch (e) {
+                document.getElementById('shareCodeValue').textContent = '密钥无效';
+                document.querySelector('.share-title').textContent = '错误';
+            }
+        }
+
+        function startShareTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            function update() {
+                const remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
+                document.getElementById('shareTimerText').textContent = remaining;
+                if (remaining === 30) refreshShareCode();
+            }
+            update();
+            timerInterval = setInterval(update, 250);
+        }
+
+        async function refreshShareCode() {
+            if (!currentSecret || isGenerating) return;
+            isGenerating = true;
+            try {
+                const otp = await generateTOTP(currentSecret);
+                const el = document.getElementById('shareCodeValue');
+                el.textContent = otp.substring(0, 3) + ' ' + otp.substring(3);
+                el.style.opacity = '0.3';
+                setTimeout(() => el.style.opacity = '1', 150);
+            } catch (e) { }
+            isGenerating = false;
+        }
+
+        async function copyShareCode() {
+            const code = document.getElementById('shareCodeValue').textContent.replace(/\s/g, '');
+            if (code && code !== '------' && code !== '密钥无效') {
+                try {
+                    await copyToClipboard(code);
+                    showToast('已复制验证码');
+                } catch (e) {
+                    console.warn('剪贴板写入失败', e);
+                }
+            }
+        }
+
+        // ============ 事件处理 ============
+        async function handleGenerate(autoCopy = true) {
+            const input = document.getElementById('secretInput').value.trim();
+            if (!input) return showError('请输入密钥');
+            try {
+                hideError();
+                currentSecret = input;
+                const otp = await generateTOTP(input);
+
+                document.getElementById('otpCode').textContent = otp.substring(0, 3) + ' ' + otp.substring(3);
+                document.getElementById('codeDisplay').classList.add('active');
+                document.getElementById('qrSection').classList.remove('active'); // 隐藏QR如果正在看验证码
+
+                // 验证成功后，保存到本地存储
+                localStorage.setItem('2fa_secret_key', input);
+
+                // 更新底部分享提示
+                const shareHolder = document.getElementById('shareSecretHolder');
+                if (shareHolder) shareHolder.textContent = input.replace(/\s+/g, '').toUpperCase();
+
+                if (autoCopy) {
+                    try {
+                        await copyToClipboard(otp);
+                        showToast('验证码自动复制成功');
+                    } catch (err) {
+                        console.warn('剪贴板写入失败', err);
+                    }
+                }
+
+                startTimer();
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            const circumference = 2 * Math.PI * 22; // r=22
+            function update() {
+                const remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
+                document.getElementById('timerText').textContent = remaining;
+
+                const ring = document.getElementById('ringProgress');
+                ring.style.strokeDashoffset = circumference * (1 - (remaining / 30));
+
+                ring.classList.remove('warning', 'danger');
+                if (remaining <= 5) ring.classList.add('danger');
+                else if (remaining <= 10) ring.classList.add('warning');
+
+                if (remaining === 30) refreshCode();
+            }
+            update();
+            timerInterval = setInterval(update, 250);
+        }
+
+        async function refreshCode() {
+            if (!currentSecret || isGenerating) return;
+            isGenerating = true;
+            try {
+                const otp = await generateTOTP(currentSecret);
+                const el = document.getElementById('otpCode');
+                el.textContent = otp.substring(0, 3) + ' ' + otp.substring(3);
+                el.style.opacity = '0.3';
+                setTimeout(() => el.style.opacity = '1', 150);
+            } catch (e) { }
+            isGenerating = false;
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+        }
+
+        async function copyCode() {
+            const code = document.getElementById('otpCode').textContent.replace(/\s/g, '');
+            if (code && code !== '------') {
+                await copyToClipboard(code);
+                showToast('已复制验证码');
+            }
+        }
+
+        function handleQR() {
+            const input = document.getElementById('secretInput').value.trim();
+            if (!input) return showError('请输入密钥以生成二维码');
+            try {
+                base32Decode(input);
+                hideError();
+            } catch (e) {
+                return showError(e.message);
+            }
+
+            const qrContainer = document.getElementById('qrContainer');
+            qrContainer.innerHTML = '';
+            const uri = `otpauth://totp/2FA-Auth?secret=${input.replace(/\s+/g, '').toUpperCase()}`;
+
+            new QRCode(qrContainer, {
+                text: uri,
+                width: 160,
+                height: 160,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('qrSection').classList.add('active');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').classList.remove('active');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        document.getElementById('secretInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleGenerate();
+            }
+        });
+        document.getElementById('secretInput').addEventListener('focus', hideError);
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', initFromStorage);
+    </script>
+</body>
+
+</html>
