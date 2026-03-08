@@ -57,8 +57,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: 40px 24px;
             -webkit-font-smoothing: antialiased;
+        }
+
+        .main-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* 极简网格背景 */
@@ -399,6 +406,120 @@
             }
         }
 
+        /* 这是为了增强AdSense合规性添加的说明区域样式 */
+        .info-section {
+            width: 100%;
+            max-width: 680px;
+            margin-top: 40px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px 32px;
+            box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.05),
+                0 0 0 1px rgba(15, 23, 42, 0.03);
+            line-height: 1.5;
+        }
+
+        .info-section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .info-list {
+            list-style: none;
+        }
+
+        .info-list li {
+            margin-bottom: 10px;
+            font-size: 14.5px;
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 18px;
+        }
+
+        .info-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 4px;
+        }
+
+        .copyable-key {
+            background: var(--bg-secondary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--accent);
+            border: 1px solid transparent;
+            word-break: break-all;
+        }
+
+        .copyable-key:hover {
+            background: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .text-link {
+            color: var(--accent);
+            text-decoration: none;
+            word-break: break-all;
+            transition: var(--transition);
+        }
+
+        .text-link:hover {
+            text-decoration: underline;
+            color: var(--accent-hover);
+        }
+
+        /* 底部链接 SEO */
+        .footer-links {
+            margin-top: 40px;
+            display: flex;
+            gap: 24px;
+            font-size: 13.5px;
+            color: var(--text-muted);
+            justify-content: center;
+            width: 100%;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .info-section {
+                padding: 24px;
+            }
+
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+        }
+
         /* ============ 极简分享模式 ============ */
         body.share-mode {
             background: #1a1a2e;
@@ -415,7 +536,7 @@
             color: #e2e8f0;
         }
 
-        body.share-mode .container {
+        body.share-mode .main-wrapper {
             display: none;
         }
 
@@ -494,55 +615,90 @@
 </head>
 
 <body>
-    <div class="container">
-        <!-- 头部 -->
-        <div class="header">
-            <h1>2FA 验证器</h1>
-            <p>基于 TOTP 标准，安全、快速生成验证码</p>
-        </div>
-
-        <!-- 主卡片 -->
-        <div class="card">
-            <div class="input-group">
-                <input type="text" id="secretInput" class="secret-input" placeholder="点击此处输入密钥" autocomplete="off"
-                    spellcheck="false">
-                <div class="error-msg" id="errorMsg"></div>
+    <div class="main-wrapper">
+        <div class="container">
+            <!-- 头部 -->
+            <div class="header">
+                <h1>2FA 验证器</h1>
+                <p>基于 TOTP 标准，安全、快速生成验证码</p>
             </div>
 
-            <div class="btn-group">
-                <button class="btn btn-primary" id="generateBtn" onclick="handleGenerate()">
-                    获取验证码
-                </button>
-                <button class="btn btn-secondary" id="qrBtn" onclick="handleQR()">
-                    二维码
-                </button>
-            </div>
+            <!-- 主卡片 -->
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="secretInput" class="secret-input" placeholder="点击此处输入密钥" autocomplete="off"
+                        spellcheck="false">
+                    <div class="error-msg" id="errorMsg"></div>
+                </div>
 
-            <!-- 验证码展示 -->
-            <div class="code-display" id="codeDisplay">
-                <div class="code-section" onclick="copyCode()" title="点击复制验证码">
-                    <div class="code-value" id="otpCode">------</div>
-                    <div class="timer-ring">
-                        <svg viewBox="0 0 48 48">
-                            <circle class="ring-bg" cx="24" cy="24" r="22" />
-                            <circle class="ring-progress" id="ringProgress" cx="24" cy="24" r="22" />
-                        </svg>
-                        <span class="timer-text" id="timerText">30</span>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="generateBtn" onclick="handleGenerate()">
+                        获取验证码
+                    </button>
+                    <button class="btn btn-secondary" id="qrBtn" onclick="handleQR()">
+                        二维码
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 0.6; padding: 14px 10px;" id="clearBtn"
+                        onclick="handleClear()" title="清除本地保存的密钥">
+                        清除
+                    </button>
+                </div>
+
+                <!-- 验证码展示 -->
+                <div class="code-display" id="codeDisplay">
+                    <div class="code-section" onclick="copyCode()" title="点击复制验证码">
+                        <div class="code-value" id="otpCode">------</div>
+                        <div class="timer-ring">
+                            <svg viewBox="0 0 48 48">
+                                <circle class="ring-bg" cx="24" cy="24" r="22" />
+                                <circle class="ring-progress" id="ringProgress" cx="24" cy="24" r="22" />
+                            </svg>
+                            <span class="timer-text" id="timerText">30</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 二维码 -->
-            <div class="qr-section" id="qrSection">
-                <div class="qr-container" id="qrContainer"></div>
-            </div>
+                <!-- 二维码 -->
+                <div class="qr-section" id="qrSection">
+                    <div class="qr-container" id="qrContainer"></div>
+                </div>
 
-            <!-- 分享提示 -->
-            <div style="margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-muted);">
-                💡 分享快捷链接：<br>
-                <code>https://2fa.autos/2fa/<span id="shareSecretHolder">您的密钥</span></code>
+                <!-- 分享提示 -->
+                <div style="margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-muted);">
+                    💡 分享快捷链接：<br>
+                    <a id="shareLinkAnchor" href="javascript:void(0);" target="_blank"
+                        style="text-decoration: none; display:inline-block; margin-top:8px;">
+                        <code class="copyable-key"
+                            title="点击直接跳转">https://2fa.autos/2fa/<span id="shareSecretHolder">您的密钥</span></code>
+                    </a>
+                </div>
             </div>
         </div>
+
+        <!-- 2FA 工具说明与 SEO 优化区域 -->
+        <section class="info-section">
+            <h2>2FA 工具说明</h2>
+            <ul class="info-list">
+                <li><span class="info-label">演示密钥：</span> <span class="copyable-key"
+                        onclick="copyText('J764V3P3E77JJ3LKNUGSZ5QANTLRLTKVL')"
+                        title="点击复制">J764V3P3E77JJ3LKNUGSZ5QANTLRLTKVL</span> （复制后可直接测试）</li>
+                <li><span class="info-label">新手提示：</span>请在倒计时结束前输入 6 位验证码；密钥必须是标准 Base32 编码 (A-Z 和 2-7)。</li>
+                <li><span class="info-label">测试建议：</span>点击“获取验证码”后会自动复制到剪贴板，直接粘贴即可更快完成验证流程。</li>
+                <li><span class="info-label">分享方式：</span>在链接后追加密钥即可直接生成验证码，例如 <a
+                        href="https://2fa.autos/2fa/L5YOA45YVJHBXQKO7GFFJD5GOIUJX7IU" target="_blank" class="text-link"
+                        title="点击直接跳转访问">https://2fa.autos/2fa/L5YOA45YVJHBXQKO7GFFJD5GOIUJX7IU</a>。</li>
+                <li><span class="info-label">隐私说明：</span>本工具在浏览器本地计算验证码，不会上传密钥到服务器；仅在您的设备中保存本地缓存。</li>
+                <li><span class="info-label">最近维护：</span>2026年03月08日</li>
+            </ul>
+        </section>
+
+        <!-- 底部 SEO 链接 -->
+        <footer class="footer-links">
+            <a href="#">隐私政策 (Privacy Policy)</a>
+            <a href="#">服务条款 (Terms of Service)</a>
+            <a href="#">关于我们 (About Us)</a>
+            <a href="#">联系支持 (Contact Support)</a>
+        </footer>
     </div>
 
     <!-- 极简分享视图 -->
@@ -724,8 +880,11 @@
                 localStorage.setItem('2fa_secret_key', input);
 
                 // 更新底部分享提示
+                const formattedSecret = input.replace(/\s+/g, '').toUpperCase();
                 const shareHolder = document.getElementById('shareSecretHolder');
-                if (shareHolder) shareHolder.textContent = input.replace(/\s+/g, '').toUpperCase();
+                if (shareHolder) shareHolder.textContent = formattedSecret;
+                const shareAnchor = document.getElementById('shareLinkAnchor');
+                if (shareAnchor) shareAnchor.href = `https://2fa.autos/2fa/${formattedSecret}`;
 
                 if (autoCopy) {
                     try {
@@ -796,6 +955,25 @@
                 await copyToClipboard(code);
                 showToast('已复制验证码');
             }
+        }
+
+        async function copyText(text) {
+            await copyToClipboard(text);
+            showToast('已复制内容');
+        }
+
+        function handleClear() {
+            localStorage.removeItem('2fa_secret_key');
+            document.getElementById('secretInput').value = '';
+            document.getElementById('codeDisplay').classList.remove('active');
+            document.getElementById('qrSection').classList.remove('active');
+            currentSecret = '';
+            if (timerInterval) clearInterval(timerInterval);
+            const shareHolder = document.getElementById('shareSecretHolder');
+            if (shareHolder) shareHolder.textContent = '您的密钥';
+            const shareAnchor = document.getElementById('shareLinkAnchor');
+            if (shareAnchor) shareAnchor.href = 'javascript:void(0);';
+            showToast('已清除本地记录');
         }
 
         function handleQR() {
