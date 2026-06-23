@@ -129,7 +129,7 @@ install_xui() {
   require_cmd curl bash
   check_network
 
-  bash <(curl -fsSL https://raw.githubusercontent.com/cloudquota/script/main/Tool/x-ui.sh)
+  bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
 
   status_msg success "X-UI"
 }
