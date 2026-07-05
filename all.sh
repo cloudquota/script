@@ -159,9 +159,8 @@ install_gost() {
 
   local file="gost.sh"
 
-  if [[ ! -f "$file" ]]; then
-    wget -q -O "$file" https://raw.githubusercontent.com/qqrrooty/EZgost/main/gost.sh
-  fi
+  # 每次都强制重新下载，避免使用本地残留的旧版本脚本
+  wget -q -O "$file" https://raw.githubusercontent.com/qqrrooty/EZgost/main/gost.sh
 
   chmod +x "$file"
   ./"$file"
@@ -214,12 +213,11 @@ show_menu() {
   echo "3. DDNS"
   echo "4. GOST"
   echo "5. Docker"
-  echo "6. 全部初始化"
-  echo "7. 退出"
+  echo "6. 退出"
 }
 
 valid_choice() {
-  [[ "${1:-}" =~ ^[1-7]$ ]]
+  [[ "${1:-}" =~ ^[1-6]$ ]]
 }
 
 # =========================
@@ -239,15 +237,6 @@ process_choice() {
       eu_docker_optimize
       ;;
     6)
-      install_packages
-      enable_bbr
-      install_xui
-      setup_ddns
-      install_gost
-      setup_docker
-      eu_docker_optimize
-      ;;
-    7)
       echo -e "${GREEN}退出成功${NC}"
       exit 0
       ;;
@@ -262,7 +251,7 @@ main() {
 
   while true; do
     show_menu
-    read -r -p "请输入 (1-7, q退出): " choice
+    read -r -p "请输入 (1-6, q退出): " choice
 
     [[ "$choice" == "q" || "$choice" == "Q" ]] && break
 
