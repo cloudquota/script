@@ -203,6 +203,65 @@ eu_docker_optimize() {
 }
 
 # =========================
+# Swap 虚拟内存
+# =========================
+setup_swap() {
+  status_msg running "配置 Swap 虚拟内存"
+
+  if swapon --show | grep -q .; then
+    echo -e "${YELLOW}检测到已存在 Swap:${NC}"
+    swapon --show
+    read -r -p "是否仍要创建新的 Swap 文件？(y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+      status_msg success "Swap 配置（已跳过，使用现有 Swap）"
+      return 0
+    fi
+  fi
+
+  local mem_mb
+  mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+
+  local default_size=1
+  if (( mem_mb <= 1024 )); then
+    default_size=2
+  fi
+
+  read -r -p "请输入 Swap 大小 (GB，默认 ${default_size}): " swap_size
+  swap_size="${swap_size:-$default_size}"
+
+  if ! [[ "$swap_size" =~ ^[0-9]+$ ]] || (( swap_size <= 0 )); then
+    echo -e "${RED}输入无效，使用默认值 ${default_size}G${NC}"
+    swap_size="$default_size"
+  fi
+
+  local swapfile="/swapfile"
+
+  if [[ -f "$swapfile" ]]; then
+    swapoff "$swapfile" 2>/dev/null || true
+    rm -f "$swapfile"
+  fi
+
+  fallocate -l "${swap_size}G" "$swapfile" 2>/dev/null || dd if=/dev/zero of="$swapfile" bs=1M count=$((swap_size * 1024)) status=none
+
+  chmod 600 "$swapfile"
+  mkswap "$swapfile" >/dev/null
+  swapon "$swapfile"
+
+  if ! grep -q "^${swapfile} " /etc/fstab 2>/dev/null; then
+    echo "${swapfile} none swap sw 0 0" >>/etc/fstab
+  fi
+
+  # swappiness 调优，降低系统提前使用 swap 的倾向
+  cat >/etc/sysctl.d/99-swap.conf <<'EOF'
+vm.swappiness = 10
+EOF
+  sysctl --system >/dev/null || true
+
+  status_msg success "Swap 配置（${swap_size}G，swappiness=10）"
+  swapon --show
+}
+
+# =========================
 # 菜单
 # =========================
 show_menu() {
@@ -213,11 +272,12 @@ show_menu() {
   echo "3. DDNS"
   echo "4. GOST"
   echo "5. Docker"
-  echo "6. 退出"
+  echo "6. Swap 虚拟内存"
+  echo "7. 退出"
 }
 
 valid_choice() {
-  [[ "${1:-}" =~ ^[1-6]$ ]]
+  [[ "${1:-}" =~ ^[1-7]$ ]]
 }
 
 # =========================
@@ -236,7 +296,8 @@ process_choice() {
       setup_docker
       eu_docker_optimize
       ;;
-    6)
+    6) setup_swap ;;
+    7)
       echo -e "${GREEN}退出成功${NC}"
       exit 0
       ;;
@@ -251,7 +312,7 @@ main() {
 
   while true; do
     show_menu
-    read -r -p "请输入 (1-6, q退出): " choice
+    read -r -p "请输入 (1-7, q退出): " choice
 
     [[ "$choice" == "q" || "$choice" == "Q" ]] && break
 
